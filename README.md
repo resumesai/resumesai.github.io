@@ -1,2 +1,2 @@
 # resumesai.github.io
-Exploring resume bias.
+A project about resumes.
