@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resumes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="bulma.min.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.5/firebase.js"></script>
+    <script>
+        // Initialize Firebase
+        const config = {
+            apiKey: "AIzaSyBCPFXTiBqYm0QRyktPCPJ0x_t7FMKHPk0",
+            authDomain: "resumesai-8d1b3.firebaseapp.com",
+            databaseURL: "https://resumesai-8d1b3.firebaseio.com",
+            projectId: "resumesai-8d1b3",
+            storageBucket: "resumesai-8d1b3.appspot.com",
+            messagingSenderId: "239192561613"
+        };
+        firebase.initializeApp(config);
+    </script>
+    <style type="text/css">
+        
+        iframe {
+            width: 100%;
+            height: 600px;
+        }
+
+        .title a {
+            color: #4a4a4a;
+        }
+
+        .level .has-margin {
+            margin: 1em;
+        }
+
+        .level progress {
+            margin-bottom: 0 !important;
+        }
+
+        .is-grouped .button {
+            margin: 0.5em auto;
+        }
+
+        .section {
+            padding: 1.5em;
+        }
+
+        #tracker {
+            margin-left: 0;
+        }
+
+    </style>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <div id="final-panel" class="content is-hidden">
+                <div class="card">
+                    <div class="card-content">
+                        <div id="form">
+                            <h1 class="title">One more question...</h1>
+                            <p>Which best describes your role?</p>
+                            <div class="select">
+                                <select id="role">
+                                    <option value="null" selected="selected">...</option>
+                                    <option value="student">Student</option>
+                                    <option value="engineer">Engineer</option>
+                                    <option value="recruiter">Recruiter</option>
+                                    <option value="hiringmanager">Hiring Manager</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <hr>
+                            <p>Please click Submit and wait for a confirmation.</p>
+                            <button id="submit" class="button is-primary is-outlined">Submit</button>
+                        </div>
+                        <div id="confirmation" class="notification is-primary is-hidden">
+                            <p>Thank you for your participation! You submitted at <strong><span id="time">TIME</span></strong>.</p>
+                            <p>Come visit our table during the project showcase to see your results, or email Vinesh Kannan (v@hawk.iit.edu).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="level">
+                <button id="back" class="button has-margin">Back</button>
+                <p id="tracker" class="has-margin">1.100s</p>
+                <progress id="progress" class="progress is-primary" value="15" max="100"></progress>
+                <button id="next" class="button has-margin">Next</button>
+            </div>
+            <div class="content">
+                <h1 class="is-title is-1">Do you think this person would make a good software engineer?</h1>
+                <div class="field is-grouped">
+                    <button id="yes" class="button is-primary is-large is-outlined">Yes</button>
+                    <button id="no" class="button is-danger is-large is-outlined">No</button>
+                </div>
+                <iframe id="resume-viewer"></iframe>
+            </div>
+        </div>
+    </section>
+    <script type="text/javascript">
+        
+        const FILES = `j050601_m.pdf
+j050701_m.pdf
+j050702_m.pdf
+j052201_m.pdf
+j052501_m.pdf
+j052601_m.pdf
+j052602_m.pdf
+j053801_m.pdf
+j053802_m.pdf
+s051542_m.pdf
+s051903_m.pdf
+s052220_m.pdf
+s052922_f.pdf
+v051101_m.pdf
+v051501_m.pdf
+v051601_m.pdf
+v051701_m.pdf
+v052401_m.pdf
+v053001_m.pdf
+v053201_m.pdf
+v054501_m.pdf
+v054601_f.pdf
+v064101_f.pdf
+v064201_f.pdf
+v090201_m.pdf`.split('\n').map(s => s.trim()).map(s => s.split('.')[0]);
+
+
+        const db = firebase.database();
+        let currentIndex = 0;
+        let answers = FILES.map(s => 'null');
+        updateView();
+
+        document.querySelector('#back').addEventListener('click', (e) => {
+            updateView('back');
+        });
+
+        document.querySelector('#next').addEventListener('click', (e) => {
+            if (answers[currentIndex] === 'null') {
+                alert(`Please rate resume ${currentIndex + 1} before moving on.`);
+            } else {
+                updateView('next');
+            }
+        });
+
+        document.querySelector('#yes').addEventListener('click', (e) => {
+            answers[currentIndex] = 'yes';
+            updateView('next');
+        });
+
+        document.querySelector('#no').addEventListener('click', (e) => {
+            answers[currentIndex] = 'no'; 
+            updateView('next');
+        });
+
+        document.querySelector('#submit').addEventListener('click', (e) => {
+            const ansMap = getAnswers();
+            const role = document.querySelector('#role').value;
+            if (role === 'null') {
+                alert('Please select your role.');
+            } else {
+                const timestamp = Date.now();
+                console.log(timestamp, role, ansMap);
+                const resp = {
+                    timestamp: timestamp,
+                    role: role,
+                    answers: ansMap
+                };
+                const promise = db.ref('responses').push(resp);
+                promise.then((done) => {
+                    document.querySelector('#time').innerText = moment(timestamp).format('h:mm A');
+                    document.querySelector('#confirmation').classList.remove('is-hidden');
+                    document.querySelector('#form').classList.add('is-hidden');
+                }).catch((err) => {
+                    prompt('Something went wrong. Please try again or send the error message below to v@hawk.iit.edu for help.', err);
+                });
+            }
+        });
+
+        function updateView(direction) {
+            if (direction === 'back') {
+                currentIndex -= 1;
+                currentIndex = Math.max(0, currentIndex);
+            } else if (direction === 'next') {
+                currentIndex += 1;
+                currentIndex = Math.min(FILES.length - 1, currentIndex);
+            }
+            const percent = (currentIndex / (FILES.length - 1)) * 100;
+            document.querySelector('#progress').setAttribute('value', percent);
+            document.querySelector('#tracker').innerText = `${currentIndex + 1}/${(FILES.length)}`;
+            const filename = `files/${FILES[currentIndex]}.pdf`;
+            document.querySelector('#resume-viewer').setAttribute('src', filename);
+            const ans = answers[currentIndex];
+            document.querySelector('#yes').classList.add('is-outlined');
+            document.querySelector('#no').classList.add('is-outlined');
+            if (ans === 'yes') {
+                document.querySelector('#yes').classList.remove('is-outlined');
+            } else if (ans === 'no') {
+                document.querySelector('#no').classList.remove('is-outlined');
+            }
+            const finished = answers.filter(v => v !== 'null').length === FILES.length;
+            if (finished) {
+                document.querySelector('#final-panel').classList.remove('is-hidden');
+            }
+        }
+
+        function getAnswers() {
+            const ansMap = FILES.reduce((agg, val, idx) => {
+                agg[val] = answers[idx];
+                return agg;
+            }, {});
+            return ansMap;
+        }
+
+    </script>
+</body>
+</html>
