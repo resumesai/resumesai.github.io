@@ -95,10 +95,10 @@
                 <ul>
                     <li>The tree does not represent how the reviewer made choices, just the attributes that most-cleanly split between their accepted and rejected resumes.</li>
                     <li>Read the tree <strong>nodes</strong> from top to bottom for rules on how to classify resumes as accepted or rejected.</li>
-                    <li>Split nodes show the <strong>split criteria</strong> in the first line. Go left if the attribute is <span class="tag">True</span> and go right if the attribute is <span class="tag">False</span></li>
-                    <li>The <span class="tag">gini</span> measures <strong>entropy</strong>. Entropy values of <span class="tag">0.5</span> indicate nodes with the same number of accepted and rejected resumes, while smaller entropy values indicate more decisive splits.</li>
-                    <li>The <span class="tag">value</span> property of each node shows how many resumes with that classification were: <span class="tag">[rejected, accepted]</span>.</li>
-                    <li>The <span class="tag">class</span> label is set to <span class="tag is-danger">rejected</span> or <span class="tag is-success">accepted</span> based on which of the two values is larger.</li>
+                    <li>Split nodes show the <strong>split criteria</strong> in the first line. Go left if the attribute is <span class="tag">True</span> and go right if the attribute is <span class="tag">False</span>.</li>
+                    <li>The <span class="tag">gini</span> value measures <strong>entropy</strong> at each node. The maximum entropy value is <span class="tag">0.5</span>, indicating nodes with the same number of accepted and rejected resumes. Smaller entropy values indicate more decisive splits.</li>
+                    <li>The <span class="tag">value</span> property of each node shows how many resumes with that classification were: <span class="tag">[accepted, rejected]</span>.</li>
+                    <li>The <span class="tag">class</span> label is set to <span class="tag is-success">accepted</span> or <span class="tag is-danger">rejected</span> based on which of the two values is larger.</li>
                 </ul>
                 <br>
                 <div id="dtree">
