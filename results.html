@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resumes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="bulma.min.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.5.5/firebase.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>
+        // Initialize Firebase
+        const config = {
+            apiKey: "AIzaSyBCPFXTiBqYm0QRyktPCPJ0x_t7FMKHPk0",
+            authDomain: "resumesai-8d1b3.firebaseapp.com",
+            databaseURL: "https://resumesai-8d1b3.firebaseio.com",
+            projectId: "resumesai-8d1b3",
+            storageBucket: "resumesai-8d1b3.appspot.com",
+            messagingSenderId: "239192561613"
+        };
+        firebase.initializeApp(config);
+    </script>
+    <style type="text/css">
+        
+        iframe {
+            width: 100%;
+            height: 600px;
+        }
+
+        .title a {
+            color: #4a4a4a;
+        }
+
+        .level .has-margin {
+            margin: 1em;
+        }
+
+        .level progress {
+            margin-bottom: 0 !important;
+        }
+
+        .is-grouped .button {
+            margin: 0.5em auto;
+        }
+
+        .section {
+            padding: 1.5em;
+        }
+
+        #tracker {
+            margin-left: 0;
+        }
+
+        .my-load {
+            outline: none;
+            border: none;
+            margin: 0 auto;
+        }
+
+        .button-group .button {
+            margin: 0.25em;
+        }
+
+        .is-highlighted-column {
+            background: #fafafa;
+        }
+
+    </style>
+</head>
+<body>
+    <section class="hero is-primary is-bold">
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns">
+                    <div id="main" class="column is-two-thirds">
+                        <h1 class="title is-1">Anonymous Results</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section">
+        <div class="container">
+            <div class="content">
+                <h2 class="is-title">Find a Reviewer</h2>
+                <p>View the results for an anonymize reviewer by selecting a survey submission time:</p>
+                <div id="times" class="button-group"></div>
+                <br>
+                <p><strong>Don't see your results?</strong> Our analysis server is not currently active. Email Vinesh Kannan (v@hawk.iit.edu) and we will update the website with the latest anonymous results.</p>
+                <a name="results-anchor"></a>
+                <h2 class="is-title">Resume Reviewer Models</h2>
+                <p id="role-note"></p>
+                <ul>
+                    <li><a href="#dtree-anchor">Decision Tree Classification</a></li>
+                    <li><a href="#assoc-anchor">Association Rule Mining</a></li>
+                </ul>
+                <a name="dtree-anchor"></a>
+                <h3 class="is-title is-4">Decision Tree Classification</h3>
+                <h4 class="is-subtitle is-5">How to Read</h4>
+                <ul>
+                    <li>The tree does not represent how the reviewer made choices, just the attributes that most-cleanly split between their accepted and rejected resumes.</li>
+                    <li>Read the tree <strong>nodes</strong> from top to bottom for rules on how to classify resumes as accepted or rejected.</li>
+                    <li>Split nodes show the <strong>split criteria</strong> in the first line. Go left if the attribute is <span class="tag">True</span> and go right if the attribute is <span class="tag">False</span></li>
+                    <li>The <span class="tag">gini</span> measures <strong>entropy</strong>. Entropy values of <span class="tag">0.5</span> indicate nodes with the same number of accepted and rejected resumes, while smaller entropy values indicate more decisive splits.</li>
+                    <li>The <span class="tag">value</span> property of each node shows how many resumes with that classification were: <span class="tag">[rejected, accepted]</span>.</li>
+                    <li>The <span class="tag">class</span> label is set to <span class="tag is-danger">rejected</span> or <span class="tag is-success">accepted</span> based on which of the two values is larger.</li>
+                </ul>
+                <br>
+                <div id="dtree">
+                    <img id="dtree-img">
+                </div>
+                <br>
+                <p><strong><em>Figure 1. Decision tree for labeling a resume as accepted or rejected by the reviewer. Maximum number of splits = 3.</em></strong></p>
+                <a name="assoc-anchor"></a>
+                <h3 class="is-title is-4">Association Rule Mining</h3>
+                <h4 class="is-subtitle is-5">How to Read</h4>
+                <ul>
+                    <li>The table shows resume attributes that frequently occurred in resumes the reviewer accepted or rejected.</li>
+                    <li>The metric <span class="tag">supp(a)</span> stands for <strong>support</strong>, measuring the proportion of resumes that showed this attribute or pair of attributes.</li>
+                    <li>The metric <span class="tag">conf(a -> b)</span> stands for <strong>confidence</strong>, measuring the proportion of cases that satisfy an <strong>association rule</strong>.</li>
+                    <li>Compare the <strong>confidence</strong> metrics for <span class="tag">a -> b</span> and <span class="tag">b -> a</span>. If they are different, the association is <strong>asymmetric</strong>.</li>
+                    <li>In this case, <span class="tag">conf(a -> b)</span> represents the proportion of resumes with attribute <span class="tag">a</span> that were accepted or rejected. The measure <span class="tag">conf(b -> a)</span> represents the proportion of accepted or rejected resumes that had attribute <span class="tag">a</span>.</li>
+                    <li>When <span class="tag">conf(a -> b)</span> is greater than <span class="tag">conf(b -> a)</span> for <span class="tag is-success">accepted</span>, the attribute may be a <span class="tag is-info">preference</span> or "nice-to-have" for the reviewer.</li>
+                    <li>The metric <span class="tag">phi(a, b)</span> stands for <strong>Phi correlation</strong> between the two attributes.</li>
+                    <li>The metric <span class="tag">is(a, b)</span> stands for <strong>IS score</strong>, a correlation measure adjusted for <strong>asymmetric</strong> binary (true/false) attributes.</li>
+                    <li>Phi and IS measure <strong>correlation, not causation</strong>. Values close to <span class="tag">0.0</span> indicate statistical independence, <span class="tag">1.0</span> indicates perfect positive correlation and <span class="tag">-1.0</span> indicates perfect negative correlation.</li>
+                </ul>
+                <p><strong><em>Table 1. Association rule evaluation metrics for attributes frequently occurring with acceptance or rejection.</em></strong></p>
+                <div id="assoc"></div>
+            </div>
+        </div>
+    </section>
+    <script type="text/javascript">
+
+        const db = firebase.database();
+        let raterMap = {};
+        db.ref('responses').once('value', (snap) => {
+            const el = document.querySelector('#times');
+            const val = snap.val();
+            let i = 0;
+            for (let key in val) {
+                const d = val[key];
+                raterMap[i] = d;
+                const t = moment(d.timestamp).format('M/D h:mm A');
+                let li = document.createElement('a');
+                li.classList.add('button');
+                li.classList.add('is-primary');
+                li.classList.add('is-outlined');
+                li.setAttribute('href', '#results-anchor')
+                li.innerText = t;
+                li.setAttribute("row", i);
+                li.addEventListener('click', function(e) {
+                    const ridx = parseInt(e.target.getAttribute("row"));
+                    showRater(ridx);
+                });
+                el.appendChild(li);
+                i++;
+            }
+            showRater(6);
+        });
+
+        function showRater(ridx) {
+            const d = raterMap[ridx];
+            const t = moment(d.timestamp).format('M/D h:mm A');
+            document.querySelector('#role-note').innerHTML = `Reviewer completed responses at <strong>${t}</strong>. Reviewer role: <strong>${d.role}</strong>.`;
+            document.querySelector('#assoc').innerHTML = `<button class="my-load button is-large is-loading"></button>`;
+            $.get(`analysis/rules/rater${ridx}.json`, {
+                
+            }).then(function(response) {
+                const res = JSON.parse(response);
+                drawTable(res);
+            });
+            document.querySelector('#dtree-img').setAttribute('src', `analysis/trees/rater${ridx}.png`);
+        }
+
+        function getRow(rec) {
+            const accepted = rec['b'] === 'accepted';
+            const resClass = accepted ? 'is-success' : 'is-danger';
+            const isNice = (rec['confidence(a -> b)'] > rec['confidence(b -> a)']) && accepted;
+            const attrClass = isNice ? 'tag is-info' : 'tag';
+            return `
+                <tr>
+                    <td><span class="${attrClass}">${rec['a']}</span></td>
+                    <td><span class="tag ${resClass}">${rec['b']}</span></td>
+                    <td>${rec['support'].toFixed(3)}</td>
+                    <td>${rec['support(a)'].toFixed(3)}</td>
+                    <td>${rec['support(b)'].toFixed(3)}</td>
+                    <td class="is-highlighted-column">${rec['confidence(a -> b)'].toFixed(3)}</td>
+                    <td class="is-highlighted-column">${rec['confidence(b -> a)'].toFixed(3)}</td>
+                    <td>${rec['phi(a, b)'].toFixed(3)}</td>
+                    <td class="is-highlighted-column">${rec['is(a, b)'].toFixed(3)}</td>
+                </tr>
+            `;
+        }
+
+        function drawTable(res) {
+            const tout = document.querySelector('#assoc');
+            tout.innerHTML = `
+                <table class="table is-hoverable">
+                    <thead>
+                        <tr>
+                            <th>a</th>
+                            <th>b</th>
+                            <th>supp(a, b)</th>
+                            <th>supp(a)</th>
+                            <th>supp(b)</th>
+                            <th class="is-highlighted-column">conf(a -> b)</th>
+                            <th class="is-highlighted-column">conf(b -> a)</th>
+                            <th>phi(a, b)</th>
+                            <th class="is-highlighted-column">is(a, b)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${res.map(rec => getRow(rec)).join('')}
+                    </tbody>
+                </table>
+            `;
+            if (res.length === 0) {
+                tout.innerHTML += `<p>No significant (support >= 0.5) association rules could be mined.</p>`;
+            }
+        }
+
+    </script>
+</body>
+</html>
